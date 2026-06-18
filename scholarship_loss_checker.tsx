@@ -213,7 +213,7 @@ const SCHOLARSHIPS_DB = [
   }
 ];
 
-const InputGroup = ({ label, children }) => (
+const InputGroup = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="flex flex-col gap-2">
     <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-2">
       {label}
@@ -238,7 +238,7 @@ export default function App() {
   const [results, setResults] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -246,7 +246,7 @@ export default function App() {
   const evaluateRules = (user, scheme) => {
     let totalRules = 0;
     let matchedRules = 0;
-    let missingReasons = [];
+    const missingReasons: string[] = [];
 
     if (scheme.rules.incomeMax !== undefined) {
       totalRules++;
@@ -288,7 +288,7 @@ export default function App() {
     return { score, missingReasons };
   };
 
-  const processDiagnostic = (e) => {
+  const processDiagnostic = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsProcessing(true);
     setResults(null);
@@ -331,7 +331,7 @@ export default function App() {
 
       <div className="max-w-5xl mx-auto space-y-10">
         
-        {}
+        {/* Header */}
         <header className="clay-panel p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-5">
             <div>
@@ -345,7 +345,7 @@ export default function App() {
           </div>
         </header>
 
-        {}
+        {/* Form */}
         <main className="clay-panel p-6 md:p-10">
           <form onSubmit={processDiagnostic} className="space-y-8">
             
@@ -435,7 +435,7 @@ export default function App() {
           </form>
         </main>
 
-        {}
+        {/* Results */}
         {results && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
             
