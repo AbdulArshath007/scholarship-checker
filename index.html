@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scholarship Loss Checker</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg-dark: #0c0c0e;
+      --clay-surface: #16161a;
+      --text-main: #f4f4f5;
+      --shadow-light: rgba(255,255,255,0.03);
+      --shadow-dark: rgba(0,0,0,0.6);
+      --shadow-inner-light: rgba(255,255,255,0.04);
+      --shadow-inner-dark: rgba(0,0,0,0.8);
+    }
+    * { box-sizing: border-box; }
+    body { background-color: #0c0c0e; color: #f4f4f5; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .clay-panel {
+      background: var(--clay-surface);
+      border-radius: 24px;
+      box-shadow: 12px 12px 24px var(--shadow-dark), -8px -8px 20px var(--shadow-light), inset 2px 2px 6px var(--shadow-inner-light), inset -2px -2px 6px var(--shadow-inner-dark);
+    }
+    .clay-panel-flat {
+      background: var(--clay-surface);
+      border-radius: 16px;
+      box-shadow: 8px 8px 16px var(--shadow-dark), -4px -4px 10px var(--shadow-light);
+    }
+    .clay-input {
+      background: #080809;
+      border-radius: 16px;
+      border: 2px solid transparent;
+      color: #f4f4f5;
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 14px;
+      box-shadow: inset 6px 6px 12px rgba(0,0,0,0.8), inset -4px -4px 8px rgba(255,255,255,0.02);
+      transition: all 0.3s ease;
+    }
+    .clay-input:focus {
+      outline: none;
+      border-color: #DE6FA1;
+      box-shadow: inset 4px 4px 8px rgba(0,0,0,0.9), inset -2px -2px 6px rgba(255,255,255,0.03), 0 0 0 2px rgba(222,111,161,0.15);
+    }
+    .clay-button {
+      background: #DE6FA1;
+      border-radius: 16px;
+      color: #fff;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 16px 40px;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      box-shadow: 8px 8px 16px rgba(222,111,161,0.15), -4px -4px 12px rgba(255,255,255,0.03), inset 2px 2px 6px rgba(255,255,255,0.2), inset -2px -2px 6px rgba(0,0,0,0.2);
+      transition: all 0.15s ease;
+      margin: 0 auto;
+    }
+    .clay-button:hover { transform: translateY(-2px); background: #e88ab4; }
+    .clay-button:active { transform: translateY(2px); }
+    .clay-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .spin { animation: spin 1s linear infinite; }
+    .pulse { animation: pulse 2s ease-in-out infinite; }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #0c0c0e; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #DE6FA1; }
+    label { display: block; font-size: 11px; font-weight: 700; color: #71717a; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; padding-left: 8px; }
+    select.clay-input { -webkit-appearance: none; appearance: none; }
+    option { background: #16161a; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const { createElement: h, useState, Fragment } = React;
+
+const SCHOLARSHIPS_DB = [
+  { id:"csss_01", name:"Central Sector Scheme of Scholarship", provider:"Central Govt", rules:{ incomeMax:800000, minMarksPercent:80, educationLevel:["UG"] }, benefit:"₹10,000–₹20,000/year", deadlineMonth:"October", tags:["merit"] },
+  { id:"inspire_01", name:"INSPIRE Scholarship (DST)", provider:"Central Govt", rules:{ minMarksPercent:80, educationLevel:["UG"], coursesAllowed:["Science"] }, benefit:"₹5,000/mo + ₹20k grant", deadlineMonth:"August", tags:["science","merit"] },
+  { id:"yasasvi_01", name:"PM YASASVI Scholarship", provider:"Central Govt", rules:{ incomeMax:250000, categoriesAllowed:["OBC","EBC","DNT"], educationLevel:["School"] }, benefit:"₹75,000–₹1,25,000", deadlineMonth:"August", tags:["reservation","means","niche"] },
+  { id:"nmms_01", name:"NMMS Scholarship", provider:"Central Govt", rules:{ incomeMax:350000, minMarksPercent:55, educationLevel:["School"] }, benefit:"₹12,000/year", deadlineMonth:"November", tags:["merit","means"] },
+  { id:"aicte_pragati", name:"AICTE Pragati Scholarship", provider:"Central Govt", rules:{ gender:"Female", incomeMax:800000, educationLevel:["UG"], coursesAllowed:["Engineering","Tech","Diploma"] }, benefit:"₹50,000/year", deadlineMonth:"October", tags:["girls","engineering","niche"] },
+  { id:"aicte_saksham", name:"AICTE Saksham Scholarship", provider:"Central Govt", rules:{ incomeMax:800000, educationLevel:["UG"], categoriesAllowed:["PWD"] }, benefit:"₹50,000/year", deadlineMonth:"October", tags:["pwd","niche"] },
+  { id:"reliance_ug", name:"Reliance Foundation UG", provider:"Private", rules:{ incomeMax:800000, minMarksPercent:60, educationLevel:["UG"] }, benefit:"Up to ₹2,00,000 total", deadlineMonth:"October", tags:["merit","means"] },
+  { id:"tata_pankh", name:"Tata Capital Pankh", provider:"Private", rules:{ incomeMax:250000, educationLevel:["School","UG"] }, benefit:"₹10,000–₹1,00,000", deadlineMonth:"September", tags:["means"] },
+  { id:"ongc_01", name:"ONGC Merit Scholarship", provider:"PSU", rules:{ incomeMax:200000, educationLevel:["UG"], coursesAllowed:["Engineering","MBBS"] }, benefit:"₹48,000/year", deadlineMonth:"July", tags:["merit","engineering","niche"] },
+  { id:"ntpc_01", name:"NTPC Utkarsh Scheme", provider:"PSU", rules:{ incomeMax:150000, educationLevel:["UG"] }, benefit:"₹24,000/year", deadlineMonth:"June", tags:["means"] }
+];
+
+function evaluateRules(user, scheme) {
+  let total = 0, matched = 0;
+  const missing = [];
+  if (scheme.rules.incomeMax !== undefined) { total++; if (Number(user.income) <= scheme.rules.incomeMax) matched++; else missing.push(`Income Limit Exceeded (Max: ₹${scheme.rules.incomeMax.toLocaleString()})`); }
+  if (scheme.rules.minMarksPercent !== undefined) { total++; if (Number(user.marks) >= scheme.rules.minMarksPercent) matched++; else missing.push(`Academic Deficit (Requires ${scheme.rules.minMarksPercent}%+)`); }
+  if (scheme.rules.educationLevel) { total++; if (scheme.rules.educationLevel.includes(user.educationLevel) || scheme.rules.educationLevel.includes("All")) matched++; else missing.push("Education Level Mismatch"); }
+  if (scheme.rules.categoriesAllowed) { total++; if (scheme.rules.categoriesAllowed.includes(user.category)) matched++; else missing.push("Category Restriction"); }
+  if (scheme.rules.gender && scheme.rules.gender !== "ALL") { total++; if (user.gender === scheme.rules.gender) matched++; else missing.push(`Gender Restriction (${scheme.rules.gender} only)`); }
+  if (scheme.rules.coursesAllowed && !scheme.rules.coursesAllowed.includes("ALL")) { total++; if (scheme.rules.coursesAllowed.includes(user.course)) matched++; else missing.push("Course Stream Mismatch"); }
+  return { score: total > 0 ? (matched / total) * 100 : 100, missing };
+}
+
+function InputGroup({ label, children }) {
+  return h('div', { style:{display:'flex',flexDirection:'column',gap:8} },
+    h('label', null, label),
+    children
+  );
+}
+
+function App() {
+  const [form, setForm] = useState({ age:'', state:'ALL', income:'', category:'General', educationLevel:'School', course:'General', gender:'Male', marks:'' });
+  const [results, setResults] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const change = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+
+  const submit = e => {
+    e.preventDefault();
+    setBusy(true); setResults(null);
+    setTimeout(() => {
+      const out = { unclaimed:[], eligible:[], partial:[] };
+      SCHOLARSHIPS_DB.forEach(s => {
+        const ev = evaluateRules(form, s);
+        if (ev.score === 100) {
+          if (s.tags.includes('niche')) out.unclaimed.push({ ...s, note:"Demographic Match: High probability of disbursement due to low historical utilization." });
+          else out.eligible.push(s);
+        } else if (ev.score >= 50) {
+          out.partial.push({ ...s, missing: ev.missing });
+        }
+      });
+      setResults(out); setBusy(false);
+    }, 600);
+  };
+
+  const S = { pad:'24px', gap:24 };
+
+  return h('div', { style:{ minHeight:'100vh', background:'#0c0c0e', color:'#f4f4f5', padding:'32px 16px', fontFamily:'inherit' } },
+    h('div', { style:{ maxWidth:960, margin:'0 auto', display:'flex', flexDirection:'column', gap:32 } },
+
+      // Header
+      h('header', { className:'clay-panel', style:{ padding:'24px 32px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:16 } },
+        h('div', null,
+          h('h1', { style:{ fontSize:28, fontWeight:900, color:'#f4f4f5', margin:0 } }, 'Scholarship Analyzer'),
+          h('p', { style:{ fontSize:11, color:'rgba(222,111,161,0.8)', textTransform:'uppercase', letterSpacing:'0.2em', marginTop:4, fontWeight:700 } }, 'Know what you are eligible for')
+        ),
+        h('div', { className:'clay-panel-flat', style:{ padding:'8px 16px', display:'flex', alignItems:'center', gap:12, border:'1px solid rgba(63,63,70,0.5)' } },
+          h('div', { style:{ width:10, height:10, borderRadius:'50%', background:'#10b981' }, className:'pulse' }),
+          h('span', { style:{ fontSize:11, fontWeight:700, color:'#d4d4d8', textTransform:'uppercase', letterSpacing:'0.1em' } }, 'SYSTEM ONLINE')
+        )
+      ),
+
+      // Form
+      h('main', { className:'clay-panel', style:{ padding:'32px 40px' } },
+        h('form', { onSubmit: submit },
+          h('div', { style:{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))', gap:24, marginBottom:32 } },
+            // Panel 1
+            h('div', { className:'clay-panel-flat', style:{ padding:20, border:'1px solid rgba(63,63,70,0.5)' } },
+              h('h3', { style:{ fontSize:11, fontWeight:700, color:'#d4d4d8', textTransform:'uppercase', letterSpacing:'0.1em', borderBottom:'1px solid rgba(63,63,70,1)', paddingBottom:12, marginBottom:16 } }, 'I. Identity'),
+              h('div', { style:{ display:'flex', flexDirection:'column', gap:16 } },
+                h(InputGroup, { label:'Age' }, h('input', { type:'number', name:'age', required:true, min:10, max:50, value:form.age, onChange:change, className:'clay-input', placeholder:'e.g. 19' })),
+                h(InputGroup, { label:'Gender' }, h('select', { name:'gender', value:form.gender, onChange:change, className:'clay-input' }, h('option',{value:'Male'},'Male'), h('option',{value:'Female'},'Female'), h('option',{value:'Other'},'Transgender'))),
+                h(InputGroup, { label:'State of Domicile' }, h('select', { name:'state', value:form.state, onChange:change, className:'clay-input' }, h('option',{value:'ALL'},'Central / All India'), h('option',{value:'MH'},'Maharashtra'), h('option',{value:'TN'},'Tamil Nadu'), h('option',{value:'DL'},'Delhi')))
+              )
+            ),
+            // Panel 2
+            h('div', { className:'clay-panel-flat', style:{ padding:20, border:'1px solid rgba(63,63,70,0.5)' } },
+              h('h3', { style:{ fontSize:11, fontWeight:700, color:'#d4d4d8', textTransform:'uppercase', letterSpacing:'0.1em', borderBottom:'1px solid rgba(63,63,70,1)', paddingBottom:12, marginBottom:16 } }, 'II. Financial'),
+              h('div', { style:{ display:'flex', flexDirection:'column', gap:16 } },
+                h(InputGroup, { label:'Family Income (₹)' }, h('input', { type:'number', name:'income', required:true, min:0, value:form.income, onChange:change, className:'clay-input', placeholder:'e.g. 250000' })),
+                h(InputGroup, { label:'Social Category' }, h('select', { name:'category', value:form.category, onChange:change, className:'clay-input' }, h('option',{value:'General'},'General (UR)'), h('option',{value:'OBC'},'OBC / BC'), h('option',{value:'SC'},'SC'), h('option',{value:'ST'},'ST'), h('option',{value:'PWD'},'PWD')))
+              )
+            ),
+            // Panel 3
+            h('div', { className:'clay-panel-flat', style:{ padding:20, border:'1px solid rgba(63,63,70,0.5)' } },
+              h('h3', { style:{ fontSize:11, fontWeight:700, color:'#d4d4d8', textTransform:'uppercase', letterSpacing:'0.1em', borderBottom:'1px solid rgba(63,63,70,1)', paddingBottom:12, marginBottom:16 } }, 'III. Academics'),
+              h('div', { style:{ display:'flex', flexDirection:'column', gap:16 } },
+                h(InputGroup, { label:'Education Level' }, h('select', { name:'educationLevel', value:form.educationLevel, onChange:change, className:'clay-input' }, h('option',{value:'School'},'School (1-12)'), h('option',{value:'UG'},'Undergraduate'), h('option',{value:'PG'},'Postgraduate'), h('option',{value:'Diploma'},'Diploma'))),
+                h(InputGroup, { label:'Course Stream' }, h('select', { name:'course', value:form.course, onChange:change, className:'clay-input' }, h('option',{value:'General'},'General'), h('option',{value:'Science'},'Science'), h('option',{value:'Engineering'},'Engineering & Tech'), h('option',{value:'MBBS'},'Medical'))),
+                h(InputGroup, { label:'Previous Marks (%)' }, h('input', { type:'number', name:'marks', required:true, min:0, max:100, value:form.marks, onChange:change, className:'clay-input', placeholder:'e.g. 85' }))
+              )
+            )
+          ),
+          h('button', { type:'submit', disabled:busy, className:'clay-button', style:{ letterSpacing:'0.15em' } },
+            busy ? 'Calibrating Matrices...' : 'Execute Verification Protocol'
+          )
+        )
+      ),
+
+      // Results
+      results && h('div', { style:{ display:'flex', flexDirection:'column', gap:24 } },
+        // Summary metrics
+        h('div', { style:{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:20 } },
+          h('div', { className:'clay-panel', style:{ padding:24, textAlign:'center' } },
+            h('div', { style:{ fontSize:10, fontWeight:700, color:'#fb7185', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:8 } }, 'High Priority Gaps'),
+            h('div', { style:{ fontSize:40, fontWeight:900, color:'#fff' } }, results.unclaimed.length)
+          ),
+          h('div', { className:'clay-panel', style:{ padding:24, textAlign:'center' } },
+            h('div', { style:{ fontSize:10, fontWeight:700, color:'#34d399', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:8 } }, 'Verified Eligible'),
+            h('div', { style:{ fontSize:40, fontWeight:900, color:'#fff' } }, results.eligible.length)
+          ),
+          h('div', { className:'clay-panel', style:{ padding:24, textAlign:'center' } },
+            h('div', { style:{ fontSize:10, fontWeight:700, color:'#818cf8', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:8 } }, 'Deficits Detected'),
+            h('div', { style:{ fontSize:40, fontWeight:900, color:'#fff' } }, results.partial.length)
+          )
+        ),
+
+        // Unclaimed
+        h('section', { className:'clay-panel', style:{ overflow:'hidden' } },
+          h('div', { style:{ background:'rgba(8,8,9,0.4)', borderBottom:'1px solid rgba(63,63,70,0.5)', padding:'16px 24px', display:'flex', alignItems:'center', gap:12 } },
+            h('div', { style:{ width:12, height:12, borderRadius:'50%', background:'#f43f5e' } }),
+            h('h3', { style:{ fontSize:11, fontWeight:700, color:'#e4e4e7', textTransform:'uppercase', letterSpacing:'0.1em', margin:0 } }, 'Action Required: Unclaimed Funds')
+          ),
+          h('div', { style:{ padding:24 } },
+            results.unclaimed.length === 0
+              ? h('p', { style:{ fontSize:13, color:'#71717a', textAlign:'center', padding:'16px 0' } }, 'No specific demographic anomalies detected.')
+              : h('div', { style:{ display:'flex', flexDirection:'column', gap:16 } },
+                  ...results.unclaimed.map(s =>
+                    h('div', { key:s.id, className:'clay-panel-flat', style:{ padding:20, border:'1px solid rgba(127,29,29,0.3)' } },
+                      h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:12 } },
+                        h('h4', { style:{ fontSize:17, fontWeight:700, color:'#fff', margin:0 } }, s.name),
+                        h('span', { style:{ fontSize:10, fontWeight:700, color:'#d4d4d8', padding:'4px 12px', borderRadius:999, background:'#DE6FA1', textTransform:'uppercase', letterSpacing:'0.1em' } }, s.provider)
+                      ),
+                      h('div', { style:{ background:'rgba(127,29,29,0.2)', color:'#fca5a5', fontSize:12, fontWeight:600, padding:'12px 16px', borderRadius:12, border:'1px solid rgba(153,27,27,0.3)', marginBottom:16 } }, s.note),
+                      h('div', { style:{ display:'flex', gap:24 } },
+                        h('div', null, h('div', { style:{ fontSize:10, color:'#71717a', textTransform:'uppercase', letterSpacing:'0.1em', fontWeight:700, marginBottom:4 } }, 'Disbursement'), h('div', { style:{ fontWeight:700, color:'#e4e4e7' } }, s.benefit)),
+                        h('div', null, h('div', { style:{ fontSize:10, color:'#71717a', textTransform:'uppercase', letterSpacing:'0.1em', fontWeight:700, marginBottom:4 } }, 'Deadline'), h('div', { style:{ fontWeight:700, color:'#e4e4e7' } }, s.deadlineMonth))
+                      )
+                    )
+                  )
+                )
+          )
+        ),
+
+        // Eligible
+        h('section', { className:'clay-panel', style:{ overflow:'hidden' } },
+          h('div', { style:{ background:'rgba(8,8,9,0.4)', borderBottom:'1px solid rgba(63,63,70,0.5)', padding:'16px 24px', display:'flex', alignItems:'center', gap:12 } },
+            h('div', { style:{ width:12, height:12, borderRadius:'50%', background:'#10b981' } }),
+            h('h3', { style:{ fontSize:11, fontWeight:700, color:'#e4e4e7', textTransform:'uppercase', letterSpacing:'0.1em', margin:0 } }, 'Verified Eligible Status')
+          ),
+          h('div', { style:{ padding:24 } },
+            results.eligible.length === 0
+              ? h('p', { style:{ fontSize:13, color:'#71717a', textAlign:'center', padding:'16px 0' } }, 'No standard eligible records matched.')
+              : h('div', { style:{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(260px,1fr))', gap:16 } },
+                  ...results.eligible.map(s =>
+                    h('div', { key:s.id, className:'clay-panel-flat', style:{ padding:20, border:'1px solid rgba(6,78,59,0.3)', display:'flex', flexDirection:'column', justifyContent:'space-between', gap:12 } },
+                      h('div', null,
+                        h('div', { style:{ fontSize:10, fontWeight:700, color:'#34d399', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:4 } }, s.provider),
+                        h('h4', { style:{ fontSize:15, fontWeight:700, color:'#fff', margin:0 } }, s.name)
+                      ),
+                      h('div', { style:{ background:'#080809', borderRadius:12, padding:12, display:'flex', justifyContent:'space-between', alignItems:'center', border:'1px solid rgba(63,63,70,0.5)' } },
+                        h('span', { style:{ fontSize:11, fontWeight:700, color:'#71717a', letterSpacing:'0.1em' } }, 'BENEFIT'),
+                        h('span', { style:{ fontSize:13, fontWeight:700, color:'#34d399' } }, s.benefit)
+                      )
+                    )
+                  )
+                )
+          )
+        ),
+
+        // Partial
+        h('section', { className:'clay-panel', style:{ overflow:'hidden', marginBottom:40 } },
+          h('div', { style:{ background:'rgba(8,8,9,0.4)', borderBottom:'1px solid rgba(63,63,70,0.5)', padding:'16px 24px', display:'flex', alignItems:'center', gap:12 } },
+            h('div', { style:{ width:12, height:12, borderRadius:'50%', background:'#DE6FA1' } }),
+            h('h3', { style:{ fontSize:11, fontWeight:700, color:'#e4e4e7', textTransform:'uppercase', letterSpacing:'0.1em', margin:0 } }, 'Eligibility Deficit Report')
+          ),
+          h('div', { style:{ padding:24 } },
+            results.partial.length === 0
+              ? h('p', { style:{ fontSize:13, color:'#71717a', textAlign:'center', padding:'16px 0' } }, 'No partial matches for deficit reporting.')
+              : h('div', { style:{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(260px,1fr))', gap:16 } },
+                  ...results.partial.map(s =>
+                    h('div', { key:s.id, className:'clay-panel-flat', style:{ padding:20, border:'1px solid rgba(63,63,70,0.5)' } },
+                      h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:16 } },
+                        h('h4', { style:{ fontSize:13, fontWeight:700, color:'#d4d4d8', margin:0 } }, s.name),
+                        h('span', { style:{ background:'#3f3f46', color:'#a1a1aa', fontSize:10, fontWeight:700, padding:'4px 8px', borderRadius:6, border:'1px solid #52525b', textTransform:'uppercase', flexShrink:0 } }, `Failed ${s.missing.length} Rule(s)`)
+                      ),
+                      h('div', { style:{ background:'#080809', borderRadius:12, padding:16, border:'1px solid rgba(63,63,70,0.5)' } },
+                        h('div', { style:{ fontSize:10, fontWeight:700, color:'#fb7185', textTransform:'uppercase', letterSpacing:'0.1em', borderBottom:'1px solid rgba(63,63,70,0.8)', paddingBottom:8, marginBottom:12 } }, 'Failure Reason(s)'),
+                        h('ul', { style:{ margin:0, padding:0, listStyle:'none', display:'flex', flexDirection:'column', gap:8 } },
+                          ...s.missing.map((r, i) =>
+                            h('li', { key:i, style:{ display:'flex', gap:8, fontSize:12, color:'#a1a1aa', fontWeight:500 } },
+                              h('span', { style:{ color:'#ef4444', fontWeight:700 } }, '×'),
+                              r
+                            )
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
+          )
+        )
+      )
+    )
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(h(App, null));
+</script>
+</body>
+</html>

@@ -335,13 +335,13 @@ export default function App() {
         <header className="clay-panel p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-5">
             <div>
-              <h1 className="text-2xl md:text-3xl font-extrabold text-zinc-100 tracking-tight">System Analyzer</h1>
-              <p className="text-xs text-[#DE6FA1]/80 uppercase tracking-[0.2em] mt-1 font-semibold">Scholarship Databank Verification</p>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-zinc-100 tracking-tight">Scholarship Analyzer</h1>
+              <p className="text-xs text-[#DE6FA1]/80 uppercase tracking-[0.2em] mt-1 font-semibold">Know what you are eligible for</p>
             </div>
           </div>
           <div className="clay-panel-flat px-4 py-2 flex items-center gap-3 border border-zinc-800/50">
              <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse clay-badge-success"></div>
-             <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Engine Online</span>
+             <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">SYSTEM ONLINE</span>
           </div>
         </header>
 
